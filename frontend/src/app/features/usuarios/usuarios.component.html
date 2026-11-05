@@ -1,0 +1,113 @@
+<div class="card">
+  <p-table #dt [value]="usuarios()" [lazy]="true" (onLazyLoad)="load($event)" [paginator]="true" [rows]="rows"
+    [rowsPerPageOptions]="[10, 25, 50]" [totalRecords]="total()" [loading]="loading()" dataKey="id"
+    [tableStyle]="{ 'min-width': '50rem' }" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords}"
+    [showCurrentPageReport]="true">
+    <ng-template #caption>
+      <div class="toolbar">
+        <h3>Listado de usuarios</h3>
+        <div class="actions">
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-search" />
+            <input pInputText type="text" placeholder="Buscar..." (input)="onSearch($any($event.target).value)" />
+          </p-iconfield>
+          <p-button label="Nuevo usuario" icon="pi pi-plus" (onClick)="openNew()" />
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template #header>
+      <tr>
+        <th>Nombre</th>
+        <th>Documento</th>
+        <th>Correo</th>
+        <th>Teléfono</th>
+        <th>Rol</th>
+        <th>Estado</th>
+        <th class="text-right">Acciones</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-u>
+      <tr>
+        <td class="strong">{{ u.nombre_completo }}</td>
+        <td>{{ u.numero_documento || '—' }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.telefono || '—' }}</td>
+        <td><p-tag [value]="u.rol === 'admin' ? 'Administrador' : 'Abogado'" [severity]="u.rol === 'admin' ? 'warn' : 'info'" /></td>
+        <td><p-tag [value]="u.activo ? 'Activo' : 'Inactivo'" [severity]="u.activo ? 'success' : 'secondary'" /></td>
+        <td class="text-right nowrap">
+          <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" pTooltip="Editar" (onClick)="openEdit(u)" />
+          <p-button [icon]="u.activo ? 'pi pi-ban' : 'pi pi-check-circle'" [rounded]="true" [text]="true"
+            [severity]="u.activo ? 'warn' : 'success'" [pTooltip]="u.activo ? 'Inactivar' : 'Activar'"
+            [disabled]="isSelf(u)" (onClick)="toggleEstado(u)" />
+          <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" pTooltip="Eliminar"
+            [disabled]="isSelf(u)" (onClick)="remove(u)" />
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr><td colspan="7" class="empty">No se encontraron usuarios.</td></tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog [header]="editing() ? 'Editar usuario' : 'Nuevo usuario'" [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)" [modal]="true" [style]="{ width: '40rem' }"
+  [breakpoints]="{ '640px': '95vw' }" [draggable]="false">
+  <form [formGroup]="form" (ngSubmit)="save()" class="form-grid" novalidate>
+    <button type="submit" hidden></button>
+    <div class="field">
+      <label for="nombres">Nombres *</label>
+      <input pInputText id="nombres" formControlName="nombres" />
+      @if (fieldError('nombres'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+    <div class="field">
+      <label for="apellidos">Apellidos *</label>
+      <input pInputText id="apellidos" formControlName="apellidos" />
+      @if (fieldError('apellidos'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+    <div class="field">
+      <label for="numero_documento">Número de documento</label>
+      <input pInputText id="numero_documento" formControlName="numero_documento" />
+      @if (fieldError('numero_documento'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+    <div class="field">
+      <label for="telefono">Teléfono</label>
+      <input pInputText id="telefono" formControlName="telefono" />
+      @if (fieldError('telefono'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+    <div class="field">
+      <label for="email">Correo electrónico *</label>
+      <input pInputText id="email" type="email" formControlName="email" />
+      @if (fieldError('email'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+    <div class="field">
+      <label for="rol">Rol *</label>
+      <p-select inputId="rol" formControlName="rol" [options]="roles" optionLabel="label" optionValue="value" appendTo="body" />
+      @if (fieldError('rol'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+    <div class="field">
+      <label for="password">Contraseña {{ editing() ? '(dejar vacío para no cambiar)' : '*' }}</label>
+      <p-password inputId="password" formControlName="password" [toggleMask]="true" [feedback]="false"
+        autocomplete="new-password" styleClass="w-full" inputStyleClass="w-full" />
+      @if (fieldError('password'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+    <div class="field">
+      <label for="password_confirmation">Confirmar contraseña</label>
+      <p-password inputId="password_confirmation" formControlName="password_confirmation" [toggleMask]="true"
+        [feedback]="false" autocomplete="new-password" styleClass="w-full" inputStyleClass="w-full" />
+      @if (fieldError('password_confirmation'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+    <div class="field switch">
+      <p-toggleswitch inputId="activo" formControlName="activo" />
+      <label for="activo">Usuario activo</label>
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <p-button label="Cancelar" [text]="true" severity="secondary" (onClick)="dialogVisible.set(false)" />
+    <p-button label="Guardar" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+  </ng-template>
+</p-dialog>
