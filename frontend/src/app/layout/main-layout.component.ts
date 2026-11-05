@@ -27,9 +27,9 @@ export class MainLayoutComponent {
 
   private items: MenuItem[] = [
     { label: 'Inicio', icon: 'pi pi-home', route: '/dashboard' },
-    { label: 'Usuarios', icon: 'pi pi-users', route: '/usuarios', adminOnly: true },
-    { label: 'Clientes', icon: 'pi pi-id-card', soon: true },
+    { label: 'Clientes', icon: 'pi pi-id-card', route: '/clientes' },
     { label: 'Procesos', icon: 'pi pi-briefcase', soon: true },
+    { label: 'Usuarios', icon: 'pi pi-users', route: '/usuarios', adminOnly: true },
   ];
 
   menu = computed(() => this.items.filter((i) => !i.adminOnly || this.auth.isAdmin()));

@@ -1,0 +1,141 @@
+<div class="card">
+  <p-table #dt [value]="clientes()" [lazy]="true" (onLazyLoad)="load($event)" [paginator]="true" [rows]="rows"
+    [rowsPerPageOptions]="[10, 25, 50]" [totalRecords]="total()" [loading]="loading()" dataKey="id"
+    [tableStyle]="{ 'min-width': '60rem' }" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords}"
+    [showCurrentPageReport]="true">
+    <ng-template #caption>
+      <div class="toolbar">
+        <h3>Listado de clientes</h3>
+        <div class="actions">
+          <p-select [options]="tiposPersona" [(ngModel)]="filtroTipo" optionLabel="label" optionValue="value"
+            placeholder="Tipo de persona" [showClear]="true" (onChange)="onFiltro()" />
+          <p-select [options]="estados" [(ngModel)]="filtroEstado" optionLabel="label" optionValue="value"
+            placeholder="Todos los estados" [showClear]="true" (onChange)="onFiltro()" />
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-search" />
+            <input pInputText type="text" placeholder="Buscar nombre, documento..." (input)="onSearch($any($event.target).value)" />
+          </p-iconfield>
+          <p-button label="Nuevo cliente" icon="pi pi-plus" (onClick)="openNew()" />
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template #header>
+      <tr>
+        <th>Tipo</th>
+        <th>Cédula / NIT</th>
+        <th>Nombre / Razón social</th>
+        <th>Género</th>
+        <th>Ciudad</th>
+        <th>Teléfono</th>
+        <th>Estado</th>
+        <th class="text-right">Acciones</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-c>
+      <tr>
+        <td>
+          <p-tag [value]="c.tipo_persona === 'natural' ? 'Natural' : 'Empresa'"
+            [severity]="c.tipo_persona === 'natural' ? 'info' : 'contrast'" />
+        </td>
+        <td>{{ c.numero_documento }}</td>
+        <td class="strong">{{ c.nombre }}</td>
+        <td>{{ generoLabel(c.genero) }}</td>
+        <td>{{ c.municipio?.etiqueta ?? '—' }}</td>
+        <td>{{ c.telefono || '—' }}</td>
+        <td><p-tag [value]="c.activo ? 'Activo' : 'Inactivo'" [severity]="c.activo ? 'success' : 'secondary'" /></td>
+        <td class="text-right nowrap">
+          <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" pTooltip="Editar" (onClick)="openEdit(c)" />
+          @if (puedeCambiarEstado()) {
+            <p-button [icon]="c.activo ? 'pi pi-ban' : 'pi pi-check-circle'" [rounded]="true" [text]="true"
+              [severity]="c.activo ? 'warn' : 'success'" [pTooltip]="c.activo ? 'Inactivar' : 'Activar'"
+              (onClick)="toggleEstado(c)" />
+          }
+          @if (puedeEliminar()) {
+            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" pTooltip="Eliminar" (onClick)="remove(c)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr><td colspan="8" class="empty">No se encontraron clientes.</td></tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog [header]="editing() ? 'Editar cliente' : 'Nuevo cliente'" [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)" [modal]="true" [style]="{ width: '42rem' }"
+  [breakpoints]="{ '640px': '95vw' }" [draggable]="false">
+  <form [formGroup]="form" (ngSubmit)="save()" class="form-grid" novalidate>
+    <button type="submit" hidden></button>
+
+    <div class="field full">
+      <label>Tipo de persona *</label>
+      <p-selectbutton formControlName="tipo_persona" [options]="tiposPersona" optionLabel="label" optionValue="value"
+        [allowEmpty]="false" />
+    </div>
+
+    <div class="field">
+      <label for="numero_documento">{{ esNatural() ? 'Cédula' : 'NIT' }} *</label>
+      <input pInputText id="numero_documento" formControlName="numero_documento"
+        [placeholder]="esNatural() ? 'Ej. 1144000111' : 'Ej. 900123456-7'" />
+      @if (fieldError('numero_documento'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+
+    <div class="field">
+      <label for="nombre">{{ esNatural() ? 'Nombre completo' : 'Razón social' }} *</label>
+      <input pInputText id="nombre" formControlName="nombre" />
+      @if (fieldError('nombre'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+
+    @if (esNatural()) {
+      <div class="field">
+        <label for="genero">Género *</label>
+        <p-select inputId="genero" formControlName="genero" [options]="generos" optionLabel="label" optionValue="value"
+          placeholder="Selecciona" appendTo="body" />
+        @if (fieldError('genero'); as e) { <small class="p-error">{{ e }}</small> }
+      </div>
+    }
+
+    <div class="field" [class.full]="!esNatural()">
+      <label for="municipio">Ciudad *</label>
+      <p-autocomplete inputId="municipio" formControlName="municipio" [suggestions]="municipios()"
+        (completeMethod)="buscarMunicipio($event)" optionLabel="etiqueta" [minLength]="2" [delay]="300"
+        [forceSelection]="true" placeholder="Escribe al menos 2 letras" appendTo="body" styleClass="w-full"
+        inputStyleClass="w-full" emptyMessage="Sin resultados" [showEmptyMessage]="true" />
+      @if (fieldError('municipio'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+
+    <div class="field">
+      <label for="telefono">Teléfono</label>
+      <input pInputText id="telefono" formControlName="telefono" />
+      @if (fieldError('telefono'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+
+    <div class="field">
+      <label for="email">Correo electrónico</label>
+      <input pInputText id="email" type="email" formControlName="email" />
+      @if (fieldError('email'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+
+    <div class="field full">
+      <label for="direccion">Dirección</label>
+      <input pInputText id="direccion" formControlName="direccion" />
+      @if (fieldError('direccion'); as e) { <small class="p-error">{{ e }}</small> }
+    </div>
+
+    @if (puedeCambiarEstado()) {
+      <div class="field switch full">
+        <p-toggleswitch inputId="activo" formControlName="activo" />
+        <label for="activo">Cliente activo</label>
+      </div>
+    }
+  </form>
+
+  <ng-template #footer>
+    <p-button label="Cancelar" [text]="true" severity="secondary" (onClick)="dialogVisible.set(false)" />
+    <p-button label="Guardar" icon="pi pi-check" [loading]="saving()" (onClick)="save()" />
+  </ng-template>
+</p-dialog>

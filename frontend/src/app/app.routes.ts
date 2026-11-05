@@ -20,6 +20,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
       {
+        path: 'clientes',
+        title: 'Clientes',
+        loadComponent: () => import('./features/clientes/clientes.component').then((m) => m.ClientesComponent),
+      },
+      {
         path: 'usuarios',
         title: 'Usuarios',
         canActivate: [adminGuard],

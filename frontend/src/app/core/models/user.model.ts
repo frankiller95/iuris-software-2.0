@@ -1,4 +1,11 @@
-export type Rol = 'admin' | 'abogado';
+export type RolSlug = 'admin' | 'abogado' | 'pasante';
+
+export interface Rol {
+  id: number;
+  slug: RolSlug;
+  nombre: string;
+  descripcion: string | null;
+}
 
 export interface User {
   id: number;
@@ -8,7 +15,9 @@ export interface User {
   numero_documento: string | null;
   email: string;
   telefono: string | null;
-  rol: Rol;
+  rol_id: number;
+  rol: RolSlug;
+  rol_nombre: string;
   activo: boolean;
   created_at: string;
   updated_at: string;
@@ -20,7 +29,7 @@ export interface UserPayload {
   numero_documento?: string | null;
   email: string;
   telefono?: string | null;
-  rol: Rol;
+  rol_id: number | null;
   activo: boolean;
   password?: string;
   password_confirmation?: string;

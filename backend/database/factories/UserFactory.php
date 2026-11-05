@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Enums\Rol;
+use App\Models\Rol;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -22,7 +22,7 @@ class UserFactory extends Factory
             'numero_documento' => (string) fake()->unique()->numberBetween(10000000, 1999999999),
             'email' => fake()->unique()->safeEmail(),
             'telefono' => '3'.fake()->numerify('#########'),
-            'rol' => Rol::Abogado,
+            'rol_id' => fn () => Rol::idFor(Rol::ABOGADO),
             'activo' => true,
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
@@ -32,7 +32,12 @@ class UserFactory extends Factory
 
     public function admin(): static
     {
-        return $this->state(fn () => ['rol' => Rol::Admin]);
+        return $this->state(fn () => ['rol_id' => Rol::idFor(Rol::ADMIN)]);
+    }
+
+    public function pasante(): static
+    {
+        return $this->state(fn () => ['rol_id' => Rol::idFor(Rol::PASANTE)]);
     }
 
     public function inactivo(): static

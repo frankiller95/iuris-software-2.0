@@ -2,7 +2,7 @@ import { Component, inject, signal, viewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Table, TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -17,6 +17,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Rol, User, UserPayload } from '../../core/models/user.model';
 import { AuthService } from '../../core/services/auth.service';
+import { CatalogosService } from '../../core/services/catalogos.service';
 import { UsuariosService } from './usuarios.service';
 
 function passwordsMatch(group: AbstractControl): ValidationErrors | null {
@@ -56,10 +57,7 @@ export class UsuariosComponent {
   editing = signal<User | null>(null);
   serverErrors = signal<Record<string, string[]>>({});
 
-  roles: { label: string; value: Rol }[] = [
-    { label: 'Administrador', value: 'admin' },
-    { label: 'Abogado', value: 'abogado' },
-  ];
+  roles = toSignal(inject(CatalogosService).roles(), { initialValue: [] as Rol[] });
 
   form = this.fb.nonNullable.group(
     {
@@ -68,7 +66,7 @@ export class UsuariosComponent {
       numero_documento: [''],
       email: ['', [Validators.required, Validators.email]],
       telefono: [''],
-      rol: ['abogado' as Rol, Validators.required],
+      rol_id: [null as number | null, Validators.required],
       activo: [true],
       password: [''],
       password_confirmation: [''],
@@ -110,7 +108,7 @@ export class UsuariosComponent {
   openNew(): void {
     this.editing.set(null);
     this.serverErrors.set({});
-    this.form.reset({ rol: 'abogado', activo: true });
+    this.form.reset({ rol_id: this.roles().find((r) => r.slug === 'abogado')?.id ?? null, activo: true });
     this.setPasswordRequired(true);
     this.dialogVisible.set(true);
   }
@@ -124,7 +122,7 @@ export class UsuariosComponent {
       numero_documento: user.numero_documento ?? '',
       email: user.email,
       telefono: user.telefono ?? '',
-      rol: user.rol,
+      rol_id: user.rol_id,
       activo: user.activo,
       password: '',
       password_confirmation: '',

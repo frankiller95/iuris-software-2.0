@@ -71,7 +71,7 @@ iuris-software-v2/
 
 - **API**: todas las rutas bajo `/api`, respuestas JSON, validación con Form Requests, recursos con API Resources.
 - **Autenticación**: Sanctum con tokens personales. El frontend guarda el token y lo envía en `Authorization: Bearer`. Usuarios inactivos no pueden iniciar sesión. Login limitado a 5 intentos por minuto.
-- **Roles**: `admin` (gestiona usuarios y catálogos, ve todos los procesos) y `abogado` (ve y gestiona sus procesos).
+- **Roles** (tabla `roles`): `admin` / Administrador (gestiona usuarios y catálogos, ve todos los procesos), `abogado` / Abogado (gestiona clientes y sus procesos) y `pasante` / Pasante (apoya la gestión de clientes y procesos, sin permisos para inactivar ni eliminar).
 - **Migraciones para todas las tablas**, con llaves foráneas, `timestamps` y borrado lógico (`activo` / `softDeletes`).
 - **Archivos**: disco privado de Laravel, descarga solo a través de la API autenticada.
 
@@ -84,8 +84,8 @@ iuris-software-v2/
 | 1 | **Autenticación** | Login, logout, usuario actual, guard de rutas en Angular, interceptor de token | Todos | **1** ✅ |
 | 2 | **Usuarios** | CRUD de usuarios (abogados y administradores), activar/inactivar, cambio de contraseña | Admin | **1** ✅ |
 | 3 | Layout / Dashboard | Menú lateral, barra superior, bienvenida. Más adelante: indicadores (procesos por etapa, por abogado) | Todos | 1 (base) / 4 |
-| 4 | Catálogos | Departamentos, municipios, tipos de persona, etapas, temáticas y subtemáticas, tipos de honorario | Admin | 2 |
-| 5 | Clientes | Crear, editar, listar con búsqueda y paginación, inactivar. Cédula única entre clientes activos | Todos | 2 |
+| 4 | Catálogos | Departamentos y municipios (DIVIPOLA) ✅, áreas y tipos de proceso ✅. Pendientes: etapas, tipos de honorario | Admin | 2 |
+| 5 | Clientes | Persona natural o empresa, cédula/NIT único, nombre o razón social, género, ciudad. Listar, buscar, filtrar, crear, editar, inactivar | Todos | **2** ✅ |
 | 6 | Demandados | Crear (también desde el formulario de procesos), editar, listar, inactivar | Todos | 2 |
 | 7 | Procesos | Crear, editar, listar con filtros (abogado, etapa, cliente), inactivar. Código consecutivo seguro | Todos (abogado: solo los suyos) | 3 |
 | 8 | Documentos del proceso | Subir, listar, descargar y eliminar archivos (validación de tipo y tamaño) | Todos | 3 |
@@ -134,3 +134,41 @@ iuris-software-v2/
 | — | rol = `abogado` (asignar admin manualmente) |
 | — | activo = `true` |
 | username, address, city, country, postal, about | No se migran |
+
+---
+
+## 7. Sprint 2 — Alcance entregado
+
+### Base de datos (migraciones)
+| Tabla | Descripción |
+|---|---|
+| `roles` | Administrador, Abogado, Pasante (`users.rol_id` → `roles.id`) |
+| `departamentos` / `municipios` | Catálogo DIVIPOLA de Colombia: 33 departamentos y 1122 municipios (`backend/database/data/divipola.json`, fuente datos.gov.co) |
+| `clientes` | tipo_persona (natural / juridica), numero_documento (cédula o NIT, único), nombre (nombre o razón social), genero (masculino / femenino, solo persona natural), municipio_id (ciudad), telefono, email, direccion (opcionales), activo, created_by |
+| `areas_proceso` / `tipos_proceso` | 5 áreas y 43 tipos de proceso tomados de `docs/PROCESOS EN IURIS.docx` (ver [TIPOS_PROCESOS.md](TIPOS_PROCESOS.md)) |
+
+La tabla `procesos` se crea en el siguiente sprint, con `cliente_id` y `tipo_proceso_id`.
+
+### Permisos sobre clientes
+| Acción | Admin | Abogado | Pasante |
+|---|---|---|---|
+| Ver, crear, editar | ✅ | ✅ | ✅ |
+| Activar / inactivar | ✅ | ✅ | — |
+| Eliminar | ✅ | — | — |
+
+### Nuevos endpoints
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/clientes` | Listado paginado (`?search=&tipo_persona=&activo=&page=&per_page=`) |
+| POST / PUT | `/api/clientes`, `/api/clientes/{id}` | Crear / actualizar |
+| PATCH | `/api/clientes/{id}/estado` | Activar / inactivar |
+| DELETE | `/api/clientes/{id}` | Eliminar (admin) |
+| GET | `/api/municipios?search=` | Autocompletado de ciudad (máx. 50) |
+| GET | `/api/departamentos` | Departamentos |
+| GET | `/api/areas-proceso` | Áreas con sus tipos de proceso |
+| GET | `/api/roles` | Roles (admin) |
+
+### Nota sobre las pruebas
+Las pruebas usan SQLite en memoria. Si la configuración está en caché (`php artisan config:cache`), Laravel ignora `phpunit.xml`
+y las pruebas borrarían la base MySQL; `tests/TestCase.php` ahora detiene las pruebas en ese caso.
+Ejecuta `php artisan config:clear` antes de `php artisan test`.

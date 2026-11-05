@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -28,7 +29,7 @@ class UsuariosTest extends TestCase
             'numero_documento' => '1234567890',
             'email' => 'miguel@iuris.test',
             'telefono' => '3001234567',
-            'rol' => 'abogado',
+            'rol_id' => Rol::idFor(Rol::ABOGADO),
             'activo' => true,
             'password' => 'Secreto123',
             'password_confirmation' => 'Secreto123',
@@ -77,9 +78,9 @@ class UsuariosTest extends TestCase
         User::factory()->create(['email' => 'miguel@iuris.test']);
         Sanctum::actingAs($this->admin);
 
-        $this->postJson('/api/usuarios', $this->datos(['nombres' => '', 'rol' => 'otro', 'password_confirmation' => 'x']))
+        $this->postJson('/api/usuarios', $this->datos(['nombres' => '', 'rol_id' => 999, 'password_confirmation' => 'x']))
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['nombres', 'email', 'rol', 'password']);
+            ->assertJsonValidationErrors(['nombres', 'email', 'rol_id', 'password']);
     }
 
     public function test_admin_actualiza_sin_cambiar_contrasena(): void

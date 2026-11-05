@@ -34,7 +34,7 @@
         <td>{{ u.numero_documento || '—' }}</td>
         <td>{{ u.email }}</td>
         <td>{{ u.telefono || '—' }}</td>
-        <td><p-tag [value]="u.rol === 'admin' ? 'Administrador' : 'Abogado'" [severity]="u.rol === 'admin' ? 'warn' : 'info'" /></td>
+        <td><p-tag [value]="u.rol_nombre" [severity]="u.rol === 'admin' ? 'warn' : u.rol === 'abogado' ? 'info' : 'secondary'" /></td>
         <td><p-tag [value]="u.activo ? 'Activo' : 'Inactivo'" [severity]="u.activo ? 'success' : 'secondary'" /></td>
         <td class="text-right nowrap">
           <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" pTooltip="Editar" (onClick)="openEdit(u)" />
@@ -85,8 +85,9 @@
     </div>
     <div class="field">
       <label for="rol">Rol *</label>
-      <p-select inputId="rol" formControlName="rol" [options]="roles" optionLabel="label" optionValue="value" appendTo="body" />
-      @if (fieldError('rol'); as e) { <small class="p-error">{{ e }}</small> }
+      <p-select inputId="rol" formControlName="rol_id" [options]="roles()" optionLabel="nombre" optionValue="id"
+        placeholder="Selecciona un rol" appendTo="body" />
+      @if (fieldError('rol_id'); as e) { <small class="p-error">{{ e }}</small> }
     </div>
     <div class="field">
       <label for="password">Contraseña {{ editing() ? '(dejar vacío para no cambiar)' : '*' }}</label>

@@ -54,7 +54,7 @@ class UsuarioController extends Controller
         }
 
         // Un admin no puede quitarse su propio rol ni inactivarse.
-        if ($usuario->is($request->user()) && ($data['rol'] !== 'admin' || ($data['activo'] ?? true) == false)) {
+        if ($usuario->is($request->user()) && ((int) $data['rol_id'] !== $usuario->rol_id || ($data['activo'] ?? true) == false)) {
             return response()->json(['message' => 'No puedes cambiar tu propio rol ni inactivarte.'], 422);
         }
 

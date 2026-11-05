@@ -5,7 +5,7 @@ import { AuthService } from '../../core/services/auth.service';
   selector: 'app-dashboard',
   template: `
     <div class="welcome">
-      Bienvenido, {{ auth.user()?.rol === 'admin' ? 'administrador' : 'abogad@' }}
+      Bienvenido, {{ saludo[auth.user()?.rol ?? 'abogado'] }}
       <strong>{{ auth.user()?.nombre_completo }}</strong> 🎉
     </div>
   `,
@@ -22,4 +22,5 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class DashboardComponent {
   auth = inject(AuthService);
+  saludo: Record<string, string> = { admin: 'administrador', abogado: 'abogad@', pasante: 'pasante' };
 }

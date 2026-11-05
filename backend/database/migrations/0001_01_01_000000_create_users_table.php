@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('numero_documento', 20)->nullable()->unique();
             $table->string('email', 150)->unique();
             $table->string('telefono', 20)->nullable();
-            $table->string('rol', 20)->default('abogado')->index();
+            $table->foreignId('rol_id')->constrained('roles')->restrictOnDelete();
             $table->boolean('activo')->default(true)->index();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');

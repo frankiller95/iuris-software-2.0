@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Usuarios;
 
-use App\Enums\Rol;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -26,7 +25,7 @@ class UsuarioRequest extends FormRequest
             'numero_documento' => ['nullable', 'string', 'max:20', Rule::unique('users')->ignore($userId)],
             'email' => ['required', 'email', 'max:150', Rule::unique('users')->ignore($userId)],
             'telefono' => ['nullable', 'string', 'max:20'],
-            'rol' => ['required', Rule::enum(Rol::class)],
+            'rol_id' => ['required', 'integer', Rule::exists('roles', 'id')],
             'activo' => ['sometimes', 'boolean'],
             'password' => [$creating ? 'required' : 'nullable', 'confirmed', Password::min(8)],
         ];
@@ -40,7 +39,7 @@ class UsuarioRequest extends FormRequest
             'numero_documento' => 'número de documento',
             'email' => 'correo electrónico',
             'telefono' => 'teléfono',
-            'rol' => 'rol',
+            'rol_id' => 'rol',
             'password' => 'contraseña',
         ];
     }
